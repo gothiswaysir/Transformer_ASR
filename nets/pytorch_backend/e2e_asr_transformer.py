@@ -176,7 +176,11 @@ class E2E(ASRInterface, torch.nn.Module):
         # 1. forward encoder
         xs_pad = xs_pad[:, :max(ilens)]  # for data parallel
         src_mask = make_non_pad_mask(ilens.tolist()).to(xs_pad.device).unsqueeze(-2)
-        hs_pad, hs_mask = self.encoder_C(xs_pad, src_mask)
+
+        hs_pad_C, hs_mask = self.encoder_C(xs_pad, src_mask)
+        hs_pad_E, hs_mask = self.encoder_E(xs_pad, src_mask)
+        hs_pad = torch.add(hs_pad_C, hs_pad_E)
+        hs_pad = torch.div(hs_pad, 2)
         self.hs_pad = hs_pad
 
         # 2. forward decoder
