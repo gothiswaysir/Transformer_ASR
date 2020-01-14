@@ -58,8 +58,13 @@ def get_parser(parser=None, required=True):
                         help='Random seed')
     parser.add_argument('--debugdir', type=str,
                         help='Output directory for debugging')
+    # My code
     parser.add_argument('--resume', '-r', default='', nargs='?',
-                        help='Resume the training from snapshot')
+                        help='Resume the training')
+    parser.add_argument('--resume_E', '-rE', default='', nargs='?',
+                        help='load the parameter from English pretrain snapshot')
+    parser.add_argument('--resume_C', '-rC', default='', nargs='?',
+                        help='load the parameter from Chinese pretrain snapshot')
     parser.add_argument('--minibatches', '-N', type=int, default='-1',
                         help='Process only N minibatches (for debug)')
     parser.add_argument('--verbose', '-V', default=0, type=int,

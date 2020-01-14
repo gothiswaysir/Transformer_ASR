@@ -518,6 +518,59 @@ def torch_load(path, model):
 
     del model_state_dict
 
+#My code
+def torch_load_pretrain(snapshot_path_C, snapshot_path_E, trainer):
+    """Resume from snapshot for pytorch.
+
+    Args:
+        snapshot_path (str): Snapshot file path.
+        trainer (chainer.training.Trainer): Chainer's trainer instance.
+    """
+    # load snapshot
+    snapshot_dict_C = torch.load(snapshot_path_C, map_location=lambda storage, loc: storage)
+    snapshot_dict_E = torch.load(snapshot_path_E, map_location=lambda storage, loc: storage)
+
+    model_dict = trainer.updater.model.state_dict() #This is from our model definition
+    state_dict = {}
+    for k, v in snapshot_dict_C['model'].items():
+        para1, para2 = k.split('.', 1)
+        para_name = "encoder_C." + para2
+        if para_name in model_dict.keys():
+            state_dict[para_name] = v
+
+    for k, v in snapshot_dict_E['model'].items():
+        para1, para2 = k.split('.', 1)
+        para_name = "encoder_E." + para2
+        if para_name in model_dict.keys():
+            state_dict[para_name] = v
+    print(state_dict.keys())
+
+    # restore trainer states
+    # d = NpzDeserializer(snapshot_dict['trainer'])
+    # d.load(trainer)
+
+    # restore model states
+    if hasattr(trainer.updater.model, "model"):
+        # (for TTS model)
+        if hasattr(trainer.updater.model.model, "module"):
+            trainer.updater.model.model.module.load_state_dict(snapshot_dict['model'])
+        else:
+            trainer.updater.model.model.load_state_dict(snapshot_dict['model'])
+    else:
+        # (for ASR model)
+        if hasattr(trainer.updater.model, "module"):
+            trainer.updater.model.module.load_state_dict(snapshot_dict['model'])
+        else:
+            model_dict.update(state_dict)
+            trainer.updater.model.load_state_dict(model_dict)
+            #trainer.updater.model.load_state_dict(snapshot_dict['model'])
+
+    # retore optimizer states
+    #trainer.updater.get_optimizer('main').load_state_dict(snapshot_dict['optimizer'])
+
+    # delete opened snapshot
+    del snapshot_dict_E
+    del snapshot_dict_C
 
 def torch_resume(snapshot_path, trainer):
     """Resume from snapshot for pytorch.
@@ -553,7 +606,6 @@ def torch_resume(snapshot_path, trainer):
 
     # delete opened snapshot
     del snapshot_dict
-
 
 # * ------------------ recognition related ------------------ *
 def parse_hypothesis(hyp, char_list):

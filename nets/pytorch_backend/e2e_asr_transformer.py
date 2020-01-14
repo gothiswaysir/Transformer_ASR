@@ -94,7 +94,18 @@ class E2E(ASRInterface, torch.nn.Module):
         torch.nn.Module.__init__(self)
         if args.transformer_attn_dropout_rate is None:
             args.transformer_attn_dropout_rate = args.dropout_rate
-        self.encoder = Encoder(
+        self.encoder_C = Encoder(
+            idim=idim,
+            attention_dim=args.adim,
+            attention_heads=args.aheads,
+            linear_units=args.eunits,
+            num_blocks=args.elayers,
+            input_layer=args.transformer_input_layer,
+            dropout_rate=args.dropout_rate,
+            positional_dropout_rate=args.dropout_rate,
+            attention_dropout_rate=args.transformer_attn_dropout_rate
+        )
+        self.encoder_E = Encoder(
             idim=idim,
             attention_dim=args.adim,
             attention_heads=args.aheads,
@@ -165,7 +176,7 @@ class E2E(ASRInterface, torch.nn.Module):
         # 1. forward encoder
         xs_pad = xs_pad[:, :max(ilens)]  # for data parallel
         src_mask = make_non_pad_mask(ilens.tolist()).to(xs_pad.device).unsqueeze(-2)
-        hs_pad, hs_mask = self.encoder(xs_pad, src_mask)
+        hs_pad, hs_mask = self.encoder_C(xs_pad, src_mask)
         self.hs_pad = hs_pad
 
         # 2. forward decoder
