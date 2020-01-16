@@ -249,7 +249,12 @@ class E2E(ASRInterface, torch.nn.Module):
         """
         self.eval()
         x = torch.as_tensor(x).unsqueeze(0)
-        enc_output, _ = self.encoder(x, None)
+
+        enc_output_C, _ = self.encoder_C(x, None)
+        enc_output_E, _ = self.encoder_E(x, None)
+        enc_output = torch.add(enc_output_C, enc_output_E)
+        enc_output = torch.div(enc_output, 2)
+
         return enc_output.squeeze(0)
 
     def recognize(self, x, recog_args, char_list=None, rnnlm=None, use_jit=False):
